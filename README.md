@@ -8,10 +8,9 @@ Wi-Fi, GPS и Bluetooth, а также подробный GNSS-статус (ч�
 напряжение бортовой сети. Собирается «из кирпичиков» — пользователь сам
 решает, что показывать и в каком порядке.
 
-Приложение целенаправленно сделано под ГУ (Geely Monjaro, китайские
-универсальные «головы» и т. п.) с Android 9–12. Не публикуется в Google Play
+Приложение целенаправленно сделано под ГУ Beldgee X50+ с Android 9–12. Не публикуется в Google Play
 и устанавливается только сторонней установкой (sideload).
-
+Сделан на основе этого приложения https://github.com/DezzK/status-widget
 ---
 
 ## Возможности
@@ -214,7 +213,7 @@ Wi-Fi, GPS и Bluetooth, а также подробный GNSS-статус (ч�
 ## Установка
 
 1. Скачать APK из раздела
-   [Releases](https://github.com/DezzK/status-widget/releases).
+  
 2. Скопировать на головное устройство (по USB, через файловый менеджер,
    через ADB — как удобнее).
 3. Разрешить установку из неизвестных источников и установить APK.
@@ -236,7 +235,6 @@ Wi-Fi, GPS и Bluetooth, а также подробный GNSS-статус (ч�
 
 ## Авторы
 
-- **Dezz** — Telegram [@DezzK](https://t.me/DezzK)
-- **S. Ramazanov** — Telegram [@RamazanovS](https://t.me/RamazanovS)
 
-Сайт проекта: [dezzk.github.io/status-widget](https://dezzk.github.io/status-widget/).
+
+
