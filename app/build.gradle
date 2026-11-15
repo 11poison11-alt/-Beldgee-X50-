@@ -1,0 +1,122 @@
+/*
+ * Copyright © 2025-2026 Dezz (https://github.com/DezzK)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+apply plugin: 'com.android.application'
+
+// The APK's name, before its version: the build output's, and the one the app looks for in its update
+// channel (UpdateChannel: <name>-<version>.apk in a folder per release). One home for both.
+def packageFileName = 'status-widget'
+
+android {
+    namespace "dezz.status.widget"
+
+    compileSdkVersion 36
+
+    defaultConfig {
+        minSdk 28
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 28
+        versionCode rootProject.ext.appVersionCode
+        versionName rootProject.ext.appVersionName
+
+        // Set the output APK name
+        setProperty("archivesBaseName", "${packageFileName}-${versionName}")
+
+        resValue 'string', 'update_package_name', packageFileName
+    }
+
+    // Car-specific builds: each flavor wires in one vendor SDK via <flavor>Implementation and
+    // provides a dezz.status.widget.car.CarIntegrationFactory in its own source set
+    // (app/src/<flavor>/java). Code in main must never reference vendor classes directly.
+    flavorDimensions = ["car"]
+    productFlavors {
+        // Geely / eCarX head units (Monjaro and friends). This is the default build — its APK
+        // keeps the historical un-suffixed name (see the output rename below).
+        geely {
+            dimension "car"
+            getIsDefault().set(true)
+        }
+    }
+
+    // geely is the canonical build: status-widget-vX.Y.Z-debug.apk without a flavor tag, matching
+    // the pre-flavor naming users and update instructions already rely on. Any future flavor gets
+    // an explicit -<flavor> tag in the file name.
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach {
+            def flavorTag = variant.flavorName == "geely" ? "" : "-${variant.flavorName}"
+            outputFileName = "${packageFileName}-${variant.versionName}${flavorTag}-${variant.buildType.name}.apk"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
+    signingConfigs {
+        release {
+            storeFile file('../keystore.jks')
+            storePassword System.getenv("KEY_PASSWORD")
+            keyAlias "key0"
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            signingConfig signingConfigs.debug
+            
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+        }
+    }
+
+    buildFeatures {
+        viewBinding true
+        resValues true   // update_package_name above
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true   // the updater configures itself from the app's resources
+        }
+    }
+}
+
+dependencies {
+    implementation libs.activity
+    implementation libs.adblib
+    implementation libs.appcompat
+    implementation libs.core
+    implementation libs.constraintlayout
+    implementation libs.material
+    implementation libs.recyclerview
+
+    // eCarX AdaptAPI (Geely flavor only) — class-jar converted from the vendor-distributed
+    // dex jar; bundled into the APK the same way the infoDash fork ships it. Main source set
+    // must not import com.ecarx.* — only app/src/geely may.
+    geelyImplementation files('libs/geely/ecarx-adaptapi.jar')
+
+    // Plain JVM tests for vendor decoding rules that otherwise could only be checked in a car.
+    testImplementation libs.junit
+    // Real Android objects where a rule runs on them (the updater's store, the platform's org.json).
+    testImplementation libs.robolectric
+}

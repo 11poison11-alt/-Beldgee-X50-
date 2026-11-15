@@ -1,0 +1,165 @@
+<!--
+  ~ Copyright © 2025-2026 Dezz (https://github.com)
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://gnu.org>.
+  -->
+
+<resources>
+    <string name="app_name">Виджет информации</string>
+    <string name="accessibility_service_summary">Отслеживает активное приложение на каждом дисплее</string>
+    <string name="accessibility_service_description">Позволяет виджету определять, на каком физическом дисплее произошло переключение приложения. Нужно только для головных устройств с несколькими дисплеями: виджет будет скрываться/появляться только при переключении приложений на своём дисплее, не реагируя на другие.</string>
+
+    <string name="widget_title">Настройки виджета</string>
+    <string name="section_general">Виджет</string>
+    <string name="section_layout">Расположение</string>
+    <string name="section_appearance">Внешний вид</string>
+    <string name="enable_widget">Включить виджет</string>
+    <string name="widget_mode">Режим виджета</string>
+    <string-array name="widget_modes">
+        <item>Плавающий</item>
+        <item>Статусная строка</item>
+    </string-array>
+
+    <string name="widget_align_right">Привязать виджет к правому краю</string>
+    <string name="widget_align_right_hint">При изменении ширины содержимого правый край остаётся на месте, а левый сдвигается</string>
+    <string name="widget_position_x">Позиция виджета по X</string>
+    <string name="widget_position_y">Позиция виджета по Y</string>
+    <string name="widget_padding_left">Отступ слева</string>
+    <string name="widget_padding_right">Отступ справа</string>
+    <string name="widget_padding_top">Отступ сверху</string>
+    <string name="widget_padding_bottom">Отступ снизу</string>
+
+    <string name="icon_design">Дизайн иконок</string>
+    <string-array name="icon_designs">
+        <item>Классический</item>
+        <item>Силуэт</item>
+        <item>Полоски</item>
+    </string-array>
+
+    <string name="icon_style">Стиль иконок</string>
+    <string-array name="icon_styles">
+        <item>Монохромные</item>
+        <item>Цветные</item>
+    </string-array>
+
+    <string name="widget_theme">Тема виджета</string>
+    <string-array name="widget_themes">
+        <item>Системная</item>
+        <item>Светлая</item>
+        <item>Тёмная</item>
+        <item>Инверсная</item>
+    </string-array>
+
+    <string name="show_date">Показывать дату</string>
+    <string name="show_day_of_the_week">Показывать день недели</string>
+    <string name="one_line_layout">Однострочное расположение</string>
+    <string name="show_full_day_and_month">Не сокращать дни недели и месяцы</string>
+    <string name="date_before_day_of_week">Число перед днём недели</string>
+    <string name="brick_text_alignment">Выравнивание текста</string>
+    <string-array name="calendar_alignment_types">
+        <item>Влево</item>
+        <item>Центр</item>
+        <item>Вправо</item>
+    </string-array>
+    <string name="show_gnss_satellite_badge">Показывать спутники и режим</string>
+    <string name="show_gnss_satellite_badge_hint">Число спутников или маркер DR / анти-спуфинга. Требуется приложение GNSS Share.</string>
+    <string name="gnss_show_satellite_count">Показывать число спутников</string>
+    <string name="gnss_show_mode">Показывать режим позиционирования</string>
+    <string name="gnss_show_road">Показывать привязку к дороге</string>
+    <string name="gnss_satellites_used_in_fix">Показывать ещё и спутники в фиксе (9/12)</string>
+    <string name="gnss_show_accuracy">Показывать точность</string>
+    <string name="gnss_show_speed">Показывать скорость</string>
+    <string name="gnss_show_altitude">Показывать высоту</string>
+    <string name="gnss_show_fix_age">Показывать возраст фикса</string>
+    <string name="gnss_unit_meters">м</string>
+    <string name="gnss_unit_kilometers">км</string>
+    <string name="gnss_unit_kmh">км/ч</string>
+    <string name="gnss_unit_seconds">с</string>
+    <string name="gnss_info_block_hint">Всё, на что значок с иконки GPS может только намекнуть, — иконкой и числом, со своим размером шрифта. Машинка — счисление пути, щит — обнаружена подмена координат, дорога — позиция привязана к дороге. Число спутников и эти три лампы приходят от приложения GNSS Share и без него показывают прочерк; точность, скорость, высота и возраст фикса берутся у самого головного устройства.</string>
+    <string name="show_media_hint">Для отображения воспроизводимого медиа требуется доступ к уведомлениям.</string>
+    <string name="media_unknown_track">Идёт воспроизведение</string>
+    <string name="grant_notification_access">Открыть настройки доступа к уведомлениям</string>
+    <string name="notification_access_required">Предоставьте доступ к уведомлениям, чтобы виджет мог читать активную медиа-сессию</string>
+
+    <string name="add_element">Добавить элемент</string>
+    <string name="remove_element">Удалить элемент</string>
+    <string name="brick_reset_button">Сбросить настройки</string>
+    <string name="brick_reset_title">Сбросить настройки элемента?</string>
+    <string name="brick_reset_message">Все настройки этого элемента будут возвращены к значениям по умолчанию. Сам элемент останется в виджете.</string>
+    <string name="brick_drag_handle">Перетаскивание для изменения порядка</string>
+    <string name="brick_expand">Развернуть или свернуть настройки</string>
+    <string name="brick_title_time">Время</string>
+    <string name="brick_title_date">Дата и день недели</string>
+    <string name="brick_title_media">Воспроизведение</string>
+    <string name="brick_title_wifi">Wi-Fi</string>
+    <string name="brick_title_gps">GPS</string>
+    <string name="brick_title_bluetooth">Bluetooth</string>
+    <string name="brick_title_indoor_temp">Температура в салоне</string>
+    <string name="brick_title_outdoor_temp">Температура за бортом</string>
+    <string name="brick_title_gnss_info">Спутники и режим</string>
+    <string name="brick_title_fuel_level">Топливо</string>
+    <string name="brick_title_fuel_range">Запас хода</string>
+    <string name="brick_title_battery_voltage">Напряжение АКБ</string>
+
+    <!-- Belgee X50 / Geely Coolray (SX11) -->
+    <string name="brick_title_speed">Скорость (CAN)</string>
+    <string name="brick_title_odometer">Одометр</string>
+    <string name="brick_title_gear">Передача АКПП</string>
+    <string name="brick_title_engine_temp">Температура двигателя</string>
+    <string name="brick_title_drive_mode">Режим вождения</string>
+    <string name="brick_title_engine_running">Статус двигателя</string>
+    <string name="brick_title_tyre_pressure_fl">Давление шины ПЛ</string>
+    <string name="brick_title_tyre_pressure_fr">Давление шины ПП</string>
+    <string name="brick_title_tyre_pressure_rl">Давление шины ЗЛ</string>
+    <string name="brick_title_tyre_pressure_rr">Давление шины ЗП</string>
+    <string name="brick_title_tyre_temp_fl">Темп. шины ПЛ</string>
+    <string name="brick_title_tyre_temp_fr">Темп. шины ПП</string>
+    <string name="brick_title_tyre_temp_rl">Темп. шины ЗЛ</string>
+    <string name="brick_title_tyre_temp_rr">Темп. шины ЗП</string>
+    <string name="brick_title_maintenance_km">До ТО (пробег)</string>
+    <string name="brick_title_maintenance_days">До ТО (дни)</string>
+    <string name="brick_title_trip_dist">Поездка: пробег</string>
+    <string name="brick_title_trip_time">Поездка: время</string>
+    <string name="brick_title_trip_avg_speed">Поездка: ср. скорость</string>
+    <string name="brick_title_trip_avg_cons">Поездка: ср. расход</string>
+
+    <string name="show_bluetooth_device_count_badge">Показывать число подключённых устройств</string>
+    <string name="brick_font_size">Размер шрифта</string>
+    <string name="brick_size">Размер</string>
+    <string name="brick_outline_alpha">Интенсивность обводки</string>
+    <string name="brick_outline_width">Толщина обводки</string>
+    <string name="brick_content_alpha">Непрозрачность</string>
+    <string name="brick_margin_start">Отступ слева</string>
+    <string name="brick_margin_end">Отступ справа</string>
+    <string name="brick_adjust_y">Сдвиг по вертикали</string>
+    <string name="brick_table_rows">Строк</string>
+    <string name="brick_table_cell_gap">Промежуток между элементами</string>
+    <string name="brick_media_max_width">Максимальная ширина медиа</string>
+    <string name="brick_media_show_source">Показывать источник</string>
+    <string name="brick_media_title_first">Название перед исполнителем</string>
+    <string name="brick_media_marquee_enabled">Прокручивать длинное название</string>
+    <string name="brick_media_progress_bar_enabled">Показывать прогресс трека</string>
+    <string name="brick_media_show_playback_state">Показывать индикатор play/pause</string>
+    <string name="brick_media_duration_section">Длительность</string>
+    <string name="brick_media_show_duration">Показывать длительность</string>
+    <string name="brick_media_line_gap">Интервал между источником и названием</string>
+    <string name="brick_media_source_section">Источник</string>
+    <string name="brick_media_title_section">Композиция</string>
+    <string name="brick_font_family">Шрифт</string>
+    <string name="brick_font_bold">Жирный</string>
+    <string name="brick_font_italic">Курсив</string>
+    <string name="brick_font_bold_short">Ж</string>
+    <string name="brick_font_italic_short">К</string>
+    <string name="font_roboto_condensed">Roboto Condensed</string>
+</resources>
