@@ -1,0 +1,202 @@
+/*
+ * Copyright © 2025-2026 Dezz (https://github.com/DezzK)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package dezz.status.widget.car;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+/**
+ * Turns raw eCarX AdaptAPI readings into values in {@link CarMetric} units, or {@link Float#NaN}
+ * when a reading carries no data. Pure functions with no Android or vendor types, so the rules —
+ * most of them learned on real head units rather than from the SDK — are unit-tested on the JVM.
+ *
+ * <p>The SDK passes most of these signals through without validation: the fuel percentage is the
+ * raw signal cast to float, with no clamp, so an overfilled tank reaches us as 101..120.
+ */
+final class EcarxReadings {
+
+    /**
+     * Value of a quality-flag signal marking accurate data. The SDK's own temperature support
+     * check accepts exactly this value of the cabin and ambient quality flags and reports
+     * anything else as {@code error}.
+     */
+    static final int QUALITY_ACCURATE = 3;
+
+    /**
+     * What a signal that cannot be read is taken as. {@code CarSignalManager.getSignalValue}
+     * yields 0 when the platform returns no property value (it may also throw, which callers map
+     * to this). A quality flag of 0 is therefore ambiguous — the flag may say "undefined", or the
+     * flag signal may simply not exist on this firmware.
+     */
+    static final int SIGNAL_ABSENT = 0;
+
+    /** Sanity bounds for cabin/ambient readings; outside are CAN glitches or error sentinels. */
+    private static final float MIN_TEMPERATURE_C = -40f;
+    private static final float MAX_TEMPERATURE_C = 85f;
+
+    /** A full tank reports up to this much above 100 %; beyond it the value is garbage. */
+    private static final float MAX_OVERFILLED_PERCENT = 120f;
+
+    /**
+     * A VHAL fuel level in two or more bytes is whole percent up to this value and tenths of a
+     * percent above it, up to {@link #MAX_VHAL_FUEL_TENTHS}.
+     */
+    private static final int MAX_VHAL_FUEL_WHOLE_PERCENT = 110;
+    private static final int MAX_VHAL_FUEL_TENTHS = 1100;
+    /** One byte or two of all ones: a VHAL fuel level without data. */
+    private static final int VHAL_NO_DATA_ONE_BYTE = 0xFF;
+    private static final int VHAL_NO_DATA_TWO_BYTES = 0xFFFF;
+
+    /** No passenger car carries fuel for more than this; larger values are sentinels. */
+    private static final float MAX_RANGE_KM = 2000f;
+
+    /** Plausible 12 V system voltage, from a flat battery at cranking to a charging alternator. */
+    private static final float MIN_VOLTAGE_V = 6f;
+    private static final float MAX_VOLTAGE_V = 17f;
+
+    /** The car info and fuel-level sensors report volumes in milliliters. */
+    static final float MILLILITERS_PER_LITER = 1000f;
+
+    /** Plausible passenger-car fuel tank, liters. */
+    private static final float MIN_TANK_L = 20f;
+    private static final float MAX_TANK_L = 200f;
+
+    private EcarxReadings() {
+    }
+
+    /**
+     * {@code Float.MIN_VALUE} is the SDK's "no data yet" sentinel — returned before the platform
+     * service connects and for unknown sensor types. It is numerically ~1.4e-45, so without this
+     * check it would pass every range test as zero.
+     */
+    private static boolean isSentinel(float raw) {
+        return Float.isNaN(raw) || raw == Float.MIN_VALUE;
+    }
+
+    /** Cabin or ambient temperature, °C. */
+    static float temperature(float raw) {
+        if (isSentinel(raw) || raw < MIN_TEMPERATURE_C || raw > MAX_TEMPERATURE_C) return Float.NaN;
+        return raw;
+    }
+
+    /**
+     * Fuel percentage. Zero is "no data", not an empty tank: firmwares without a fuel gauge
+     * signal report a constant 0, and a car never runs on a gauge that reads exactly empty.
+     * A tank filled to the neck reports 101..120 and is shown as full.
+     */
+    static float fuelPercent(float raw) {
+        if (isSentinel(raw) || raw <= 0f || raw > MAX_OVERFILLED_PERCENT) return Float.NaN;
+        return Math.min(raw, 100f);
+    }
+
+    /**
+     * Fuel percentage from the VHAL vendor property {@code REMAINING_OIL}, with the rules the
+     * DriveHome project learned reading it on Geely, Livan, Belgee and Knewstar head units. One
+     * byte is whole percent, so a tank filled to the neck reads 101..120 as from the sensor — and
+     * one byte is never tenths: 100 % in tenths does not fit in it, and a full tank's 112 read as
+     * 11.2 % would show it nearly empty. Two or more bytes are whole percent up to 110 and tenths
+     * from 111 to 1100. Zero and all ones are "no data".
+     */
+    static float vhalFuelPercent(@Nullable byte[] bytes) {
+        int raw = littleEndian(bytes);
+        if (bytes == null || raw == SIGNAL_ABSENT
+                || raw == VHAL_NO_DATA_ONE_BYTE || raw == VHAL_NO_DATA_TWO_BYTES) {
+            return Float.NaN;
+        }
+        if (bytes.length > 1 && raw > MAX_VHAL_FUEL_WHOLE_PERCENT) {
+            return raw <= MAX_VHAL_FUEL_TENTHS ? fuelPercent(raw / 10f) : Float.NaN;
+        }
+        return fuelPercent(raw);
+    }
+
+    /**
+     * Remaining range, km. Zero is what a parked car reports rather than a real prediction, and
+     * values past any real tank are the signal's invalid encoding.
+     */
+    static float rangeKm(float raw) {
+        if (isSentinel(raw) || raw <= 0f || raw > MAX_RANGE_KM) return Float.NaN;
+        return raw;
+    }
+
+    /**
+     * 12 V system voltage from the raw {@code VehBattUSysU} signal and its quality flag.
+     *
+     * <p>The signal's scale is not defined anywhere in the SDK — nothing in it reads this signal.
+     * Head units have been seen reporting 13.8 V as 13, 138 and 1380, so the scale is inferred
+     * from the magnitude and the result must still land in the plausible range.
+     *
+     * <p>A quality flag that says anything but accurate rejects the reading — except 0, which an
+     * absent flag signal reads as too; the value itself is then the only evidence.
+     */
+    static float batteryVoltage(int raw, int quality) {
+        if (raw <= SIGNAL_ABSENT) return Float.NaN;
+        if (quality != SIGNAL_ABSENT && quality != QUALITY_ACCURATE) return Float.NaN;
+        float volts;
+        if (raw > 1000) {
+            volts = raw / 100f;
+        } else if (raw > 100) {
+            volts = raw / 10f;
+        } else {
+            volts = raw;
+        }
+        return volts >= MIN_VOLTAGE_V && volts <= MAX_VOLTAGE_V ? volts : Float.NaN;
+    }
+
+    /**
+     * The integer in a VHAL vendor {@code byte[]} property: eCarX sends it least significant byte
+     * first. Anything that cannot hold an int (no bytes, more than four) reads as
+     * {@link #SIGNAL_ABSENT}.
+     */
+    static int littleEndian(@Nullable byte[] bytes) {
+        if (bytes == null || bytes.length == 0 || bytes.length > 4) return SIGNAL_ABSENT;
+        int value = 0;
+        for (int i = bytes.length - 1; i >= 0; i--) {
+            value = (value << 8) | (bytes[i] & 0xFF);
+        }
+        return value;
+    }
+
+    /**
+     * The DIM fuel-table level ({@code SENSOR_TYPE_FUEL_LEVEL}, which the SDK scales to
+     * milliliters), in liters. Zero is "no data" as for the percentage: the SDK reads an absent
+     * property as 0, and swallows a failed read into its sentinel.
+     */
+    static float fuelTableLiters(float milliliters) {
+        if (isSentinel(milliliters) || milliliters <= 0f) return Float.NaN;
+        float liters = milliliters / MILLILITERS_PER_LITER;
+        return liters <= MAX_TANK_L ? liters : Float.NaN;
+    }
+
+    /** Fuel tank capacity: the car info manager reports milliliters. */
+    static float tankLiters(float milliliters) {
+        if (isSentinel(milliliters)) return Float.NaN;
+        float liters = milliliters / MILLILITERS_PER_LITER;
+        return liters >= MIN_TANK_L && liters <= MAX_TANK_L ? liters : Float.NaN;
+    }
+
+    /**
+     * How a read went once decoded, as a category for a diagnosis that logs only changes: a value
+     * ({@code "ok"}), nothing read ({@code "empty"}), or something read and refused
+     * ({@code "rejected"}).
+     */
+    @NonNull
+    static String verdict(float value, boolean nothingRead) {
+        if (!Float.isNaN(value)) return "ok";
+        return nothingRead ? "empty" : "rejected";
+    }
+}

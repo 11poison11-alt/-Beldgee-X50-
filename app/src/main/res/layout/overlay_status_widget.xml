@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright © 2025-2026 Dezz (https://github.com/DezzK)
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<!--
+   Two-level root: outer FrameLayout is attached to WindowManager so we can resize the
+   *window* (pre-expand to screen width / pin to current width) for the duration of a
+   visibility transition without confusing TransitionManager, which animates children
+   inside the inner LinearLayout instead.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/overlay_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <dezz.status.widget.BufferingLinearLayout
+        android:id="@+id/overlay_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+    <!-- Status-bar mode containers + spacers. Hidden in floating mode; bricks live as direct
+         children of the inner container then. WidgetService rearranges things at runtime. -->
+    <LinearLayout
+        android:id="@+id/startGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/startCenterSpacer"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/centerGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/centerEndSpacer"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/endGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal"
+        android:visibility="gone" />
+
+    <!-- includeFontPadding=false everywhere: removes the per-TextView reserve under font
+         ascenders / descenders that we don't need for the languages/glyphs this widget
+         renders. Makes the widget visibly more compact and keeps baselines aligned
+         across time / date / media when they share a font size. -->
+    <dezz.status.widget.OutlineTextView
+        android:id="@+id/timeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:fontFamily="@font/roboto_condensed_medium"
+        android:includeFontPadding="false"
+        android:textColor="@color/text_primary"
+        android:textSize="100sp"
+        tools:text="10:00" />
+
+    <dezz.status.widget.OutlineTextView
+        android:id="@+id/dateText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:fontFamily="@font/roboto_condensed_medium"
+        android:includeFontPadding="false"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        tools:text=" Tue, 10 Nov " />
+
+    <LinearLayout
+        android:id="@+id/mediaContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Source row: play/pause indicator + the app the audio comes from ("▶ Spotify"). The
+             indicator is a drawn shape, not a glyph, and takes its size / colour / outline from
+             whichever line hosts it. WidgetService re-parents it into the title row when the
+             source line is switched off, so the state is never lost. -->
+        <LinearLayout
+            android:id="@+id/mediaSourceRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <dezz.status.widget.MediaStateIconView
+                android:id="@+id/mediaStateIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4sp" />
+
+            <dezz.status.widget.MarqueeOutlineTextView
+                android:id="@+id/mediaAppText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/roboto_condensed_medium"
+                android:includeFontPadding="false"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                tools:text="Spotify"
+                tools:visibility="visible" />
+        </LinearLayout>
+
+        <!-- Title row: the (possibly scrolling) track subtitle plus an optional duration text. -->
+        <LinearLayout
+            android:id="@+id/mediaTitleRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <dezz.status.widget.MarqueeOutlineTextView
+                android:id="@+id/mediaTitleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/roboto_condensed_medium"
+                android:includeFontPadding="false"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                tools:text="Track — Artist"
+                tools:visibility="visible" />
+
+            <dezz.status.widget.OutlineTextView
+                android:id="@+id/mediaDurationText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/roboto_condensed_medium"
+                android:includeFontPadding="false"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                tools:text=" 4:56" />
+        </LinearLayout>
+
+        <dezz.status.widget.MediaProgressBar
+            android:id="@+id/mediaProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="3sp"
+            android:layout_marginTop="2sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <dezz.status.widget.OutlineImageView
+        android:id="@+id/wifiStatusIcon"
+        android:layout_width="100sp"
+        android:layout_height="100sp"
+        style="@style/OverlayIcon"
+        android:src="@drawable/ic_status_wifi_off"
+        tools:ignore="ContentDescription" />
+
+    <dezz.status.widget.OutlineImageView
+        android:id="@+id/gnssStatusIcon"
+        android:layout_width="100sp"
+        android:layout_height="100sp"
+        style="@style/OverlayIcon"
+        android:src="@drawable/ic_status_gps_off"
+        tools:ignore="ContentDescription" />
+
+    <dezz.status.widget.OutlineImageView
+        android:id="@+id/bluetoothStatusIcon"
+        android:layout_width="100sp"
+        android:layout_height="100sp"
+        style="@style/OverlayIcon"
+        android:src="@drawable/ic_status_bt_off"
+        tools:ignore="ContentDescription" />
+
+    <!-- Car-specific bricks (fed by the flavor's CarIntegration): a reading with an optional icon
+         in front of it, one include each. Direct children of the container like every other
+         brick so status-bar mode can re-parent them. -->
+    <include
+        android:id="@+id/indoorTempBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/outdoorTempBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/fuelLevelBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/fuelRangeBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/batteryVoltageBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <!-- Belgee X50 / Geely Coolray (SX11) bricks -->
+    <include
+        android:id="@+id/speedBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/odometerBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/gearStateBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/engineTempBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/driveModeBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/engineRunningBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tyrePressureFlBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tyrePressureFrBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tyrePressureRlBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tyrePressureRrBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tyreTempFlBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tyreTempFrBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tyreTempRlBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tyreTempRrBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/maintenanceKmBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/maintenanceDaysBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tripDistBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tripTimeBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tripAvgSpeedBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <include
+        android:id="@+id/tripAvgConsBrick"
+        layout="@layout/overlay_reading_brick" />
+
+    <!-- GNSS readout. Only the container is declared here: its children are one [icon][value]
+         cell per enabled field, built in code because the field list is a list, not a fixed
+         shape. The row/column counts are set at runtime from the brick's "rows" preference —
+         one row IS the single-line layout — and the grid keeps a column's values aligned.
+         See TableRenderBrick. -->
+    <GridLayout
+        android:id="@+id/gnssInfoContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:columnCount="1"
+        android:rowCount="1" />
+    </dezz.status.widget.BufferingLinearLayout>
+
+</FrameLayout>

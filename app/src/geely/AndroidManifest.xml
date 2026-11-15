@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Vendor VHAL properties (0x21xxxxxx / 0x28xxxxxx) -->
+    <uses-permission android:name="android.car.permission.CAR_VENDOR_EXTENSION" />
+
+    <!-- Standard Android Car VHAL properties used on Belgee X50 / Coolray (0x11xxxxxx) -->
+    <uses-permission android:name="android.car.permission.CAR_SPEED" />
+    <uses-permission android:name="android.car.permission.CAR_POWERTRAIN" />
+    <uses-permission android:name="android.car.permission.CAR_ENERGY" />
+    <uses-permission android:name="android.car.permission.CAR_INFO" />
+    <uses-permission android:name="android.car.permission.CAR_TIRES" />
+
+    <application>
+        <uses-library
+            android:name="android.car"
+            android:required="false" />
+    </application>
+</manifest>
