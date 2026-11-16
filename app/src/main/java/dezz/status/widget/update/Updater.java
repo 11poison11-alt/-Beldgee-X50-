@@ -140,22 +140,18 @@ public final class Updater {
 
     /** Read the channel now, whatever the schedule says — the person asked. */
     public void checkNow() {
-        check(null);
+        // Update disabled
     }
 
     /** Read the channel if checking by itself is on and the schedule says it is time ({@link UpdatePolicy}). */
     public void checkIfDue() {
-        checkIfDue(null);
+        // Update disabled
     }
 
     /** …and run {@code done} on the main thread once there is nothing more to wait for. */
     public void checkIfDue(@Nullable Runnable done) {
-        if (!store.autoCheck()
-                || !UpdatePolicy.checkDue(System.currentTimeMillis(), store.lastCheckOk(), store.lastCheckFail())) {
-            if (done != null) done.run();
-            return;
-        }
-        check(done);
+        if (done != null) done.run();
+        return;
     }
 
     private void check(@Nullable Runnable done) {
@@ -218,46 +214,8 @@ public final class Updater {
      * system's installer, which asks the person. While the installer's confirmation waits, this opens it again.
      */
     public void install() {
-        if (offer == null) return;
-        if (phase == UpdateState.Phase.INSTALLING && confirmation != null) {
-            confirmInstall();
-            return;
-        }
-        // INSTALLING with no confirmation is an installer that never answered: a fresh attempt replaces its
-        // session (SystemInstaller.commit abandons it), and the package on disk is reused.
-        if (phase == UpdateState.Phase.CHECKING || phase == UpdateState.Phase.DOWNLOADING) return;
-        final UpdateOffer target = offer;
-        final UpdateChannel ch = channel;
-        if (ch == null) return;
-        cancel.set(false);
-        phase = UpdateState.Phase.DOWNLOADING;
-        progress = 0;
-        problem = UpdateState.Problem.NONE;
-        problemDetail = null;
-        publish();
-        io.execute(() -> {
-            boolean handedOver = false;
-            try {
-                File apk = obtain(ch, target);
-                String wrong = PackageFile.packageProblem(app, apk, target);
-                if (wrong != null) throw new Failure(UpdateState.Problem.WRONG_PACKAGE, wrong);
-                main.post(() -> {
-                    phase = UpdateState.Phase.INSTALLING;
-                    publish();
-                });
-                handedOver = true;
-                SystemInstaller.commit(app, apk);
-                Log.i(TAG, "Committed " + target.version + " to the installer");
-            } catch (PackageFile.Canceled e) {
-                main.post(this::onCanceled);
-            } catch (Failure f) {
-                main.post(() -> fail(f.problem, f.getMessage()));
-            } catch (IOException | RuntimeException e) {
-                UpdateState.Problem p = handedOver ? UpdateState.Problem.INSTALL_FAILED
-                        : UpdateState.Problem.DOWNLOAD_FAILED;
-                main.post(() -> fail(p, e.getMessage()));
-            }
-        });
+        // Update disabled
+        Log.i(TAG, "Update is currently disabled.");
     }
 
     /** Stop the download under way. */
@@ -267,42 +225,12 @@ public final class Updater {
 
     /** Open the installer's waiting confirmation again — it was dismissed, or the system kept it from showing. */
     public void confirmInstall() {
-        Intent c = confirmation;
-        if (c == null) return;
-        try {
-            app.startActivity(new Intent(c).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        } catch (RuntimeException e) {
-            Log.w(TAG, "The installer's confirmation would not open", e);
-        }
+        // Update disabled
     }
 
     /** The installer answered about the session committed here ({@link SystemInstaller.StatusReceiver}). */
     void onInstallerStatus(int status, @Nullable String message, @Nullable Intent confirm) {
-        switch (status) {
-            case PackageInstaller.STATUS_PENDING_USER_ACTION -> {
-                confirmation = confirm;
-                phase = UpdateState.Phase.INSTALLING;
-                // Opened before the state goes out: the card is still up at this moment, and from Android 10
-                // on a window over other apps is what lets a background service open an activity.
-                confirmInstall();
-                publish();
-            }
-            case PackageInstaller.STATUS_SUCCESS -> {
-                // The system replaces this process next; nothing after it runs for long.
-                Log.i(TAG, "Installed " + (offer != null ? offer.version : "?"));
-                confirmation = null;
-                phase = UpdateState.Phase.IDLE;
-                publish();
-            }
-            case PackageInstaller.STATUS_FAILURE_ABORTED -> {
-                // The person declined in the installer's own dialog: that is «not now».
-                Log.i(TAG, "Installation declined in the installer");
-                confirmation = null;
-                phase = UpdateState.Phase.IDLE;
-                remindLater();
-            }
-            default -> fail(UpdateState.Problem.INSTALL_FAILED, message);
-        }
+        Log.i(TAG, "Update status received but disabled.");
     }
 
     /** The package for {@code target}, verified: the one on disk if it still matches, else a fresh download. */

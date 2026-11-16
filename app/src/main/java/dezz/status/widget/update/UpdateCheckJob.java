@@ -39,21 +39,14 @@ public final class UpdateCheckJob extends JobService {
 
     /** Arm the job unless it is armed already (called at every start of whatever runs the app). */
     public static void schedule(Context ctx) {
-        JobScheduler js = ctx.getSystemService(JobScheduler.class);
-        if (js == null || js.getPendingJob(JOB_ID) != null) return;
-        JobInfo job = new JobInfo.Builder(JOB_ID, new ComponentName(ctx, UpdateCheckJob.class))
-                .setPeriodic(UpdatePolicy.CHECK_INTERVAL_MS)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setPersisted(true)   // needs RECEIVE_BOOT_COMPLETED, which the manifest declares
-                .build();
-        int rc = js.schedule(job);
-        Log.i(Updater.TAG, "Background check armed, rc=" + rc);
+        // Update check is disabled
     }
+
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        Updater.get(this).checkIfDue(() -> jobFinished(params, false));
-        return true;
+        Log.i(Updater.TAG, "Background check skipped.");
+        return false;
     }
 
     @Override

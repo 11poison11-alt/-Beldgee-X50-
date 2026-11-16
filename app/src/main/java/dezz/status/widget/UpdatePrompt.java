@@ -272,37 +272,23 @@ final class UpdatePrompt implements Updater.Listener, GnssProvider.Listener {
     /** The card's words and answers for {@code s}. */
     private void bind(UpdateState s) {
         long now = System.currentTimeMillis();
-        mark.setImageTintList(ColorStateList.valueOf(UpdateWords.tone(s).color(root.getContext())));
-        title.setText(UpdateWords.title(service, s));
-        boolean idle = s.phase == UpdateState.Phase.IDLE;
-        boolean failed = s.problemToTell() != UpdateState.Problem.NONE;
-        String change = UpdateWords.change(service, s);
-        detail.setText(idle && !failed && change != null ? change : UpdateWords.detail(service, s));
+        mark.setVisibility(View.GONE);
+        title.setText("Обновление отключено");
+        detail.setText("Автоматическое и ручное обновление программно заблокировано.");
+        notes.setText("");
+        notesScroll.setVisibility(View.GONE);
 
-        progress.setVisibility(s.phase == UpdateState.Phase.DOWNLOADING ? View.VISIBLE : View.GONE);
-        progress.setProgressCompat(s.progress, true);   // -1, size unknown, reads as 0
-
-        String text = s.offer != null ? s.offer.notes : null;
-        notesScroll.setVisibility(text != null ? View.VISIBLE : View.GONE);
-        notes.setText(text);
-
-        // The installing answer leads, filled; stopping a download or putting the offer off is the outlined
-        // second — the two never come together (one is a download's, the other an idle offer's).
-        UpdateState.Action action = s.action();
-        answer(first, action.movesOn() ? UpdateWords.action(service, action) : null,
-                () -> UpdateInstall.perform(service, action));
-        if (action == UpdateState.Action.CANCEL) {
-            answer(second, UpdateWords.action(service, action), updater::cancel);
-        } else {
-            answer(second, s.canPutOff(now) ? service.getString(R.string.update_action_later) : null,
-                    updater::remindLater);
+        progress.setVisibility(View.GONE);
+        
+        first.setVisibility(View.GONE);
+        second.setVisibility(View.GONE);
+        skip.setVisibility(View.GONE);
+        
+        actions.setVisibility(View.GONE);
+        
+        if (root != null) {
+            refit();
         }
-        boolean any = first.getVisibility() == View.VISIBLE || second.getVisibility() == View.VISIBLE;
-        actions.setVisibility(any ? View.VISIBLE : View.GONE);
-        skip.setVisibility(s.canSkip() ? View.VISIBLE : View.GONE);
-        // Only an offer waiting for an answer is put off by being ignored; one under way stays as long as it runs.
-        if (idle) restartIgnoredClock();
-        else main.removeCallbacks(ignored);
     }
 
     /** Show {@code b} saying {@code text} and doing {@code action}, or hide it when there is no text. */

@@ -95,6 +95,8 @@ public class WidgetService extends Service implements WidgetHost {
     private final EnumMap<BrickType, RenderBrick> renderBricks = new EnumMap<>(BrickType.class);
 
     private GnssProvider gnssProvider;
+    @Nullable
+    private WifiPopupDialog wifiPopupDialog;
 
     @Nullable
     private UpdatePrompt updatePrompt;
@@ -1065,7 +1067,14 @@ public class WidgetService extends Service implements WidgetHost {
                         int rawY = (int) event.getRawY();
 
                         if (isViewHit(binding.wifiStatusIcon, rawX, rawY)) {
-                            openWifiSettings();
+                            if (wifiPopupDialog == null) {
+                                wifiPopupDialog = new WifiPopupDialog(this);
+                            }
+                            if (wifiPopupDialog.isShowing()) {
+                                wifiPopupDialog.dismiss();
+                            } else {
+                                wifiPopupDialog.show();
+                            }
                             return true;
                         }
                         if (isViewHit(binding.gnssStatusIcon, rawX, rawY)) {
@@ -1095,44 +1104,7 @@ public class WidgetService extends Service implements WidgetHost {
                 && rawY >= (loc[1] - pad) && rawY <= (loc[1] + view.getHeight() + pad);
     }
 
-    private void openWifiSettings() {
-        try {
-            WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-            if (wm != null && !wm.isWifiEnabled()) {
-                wm.setWifiEnabled(true);
-            }
-        } catch (Throwable ignored) {
-        }
 
-        Toast.makeText(this, "Открытие настроек Wi-Fi…", Toast.LENGTH_SHORT).show();
-
-        Intent[] candidates = new Intent[]{
-                new Intent().setComponent(new ComponentName(
-                        "com.android.settings",
-                        "com.android.settings.Settings$WifiSettingsActivity")),
-                new Intent().setComponent(new ComponentName(
-                        "com.android.settings",
-                        "com.android.settings.wifi.WifiPickerActivity")),
-                new Intent(WifiManager.ACTION_PICK_WIFI_NETWORK),
-                new Intent(Settings.ACTION_WIFI_SETTINGS),
-                new Intent().setComponent(new ComponentName(
-                        "com.ecarx.settings",
-                        "com.ecarx.settings.MainActivity")),
-                new Intent().setComponent(new ComponentName(
-                        "com.geely.setting",
-                        "com.geely.setting.MainActivity")),
-                new Intent(Settings.ACTION_SETTINGS)
-        };
-        for (Intent intent : candidates) {
-            try {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                return;
-            } catch (Throwable t) {
-                Log.w(TAG, "Wi-Fi settings candidate failed: " + intent, t);
-            }
-        }
-    }
 
     private void startMainActivity() {
         Intent startIntent = new Intent(WidgetService.this, MainActivity.class);
@@ -1213,6 +1185,10 @@ public class WidgetService extends Service implements WidgetHost {
 
         for (RenderBrick brick : renderBricks.values()) {
             brick.onDestroy();
+        }
+        if (wifiPopupDialog != null) {
+            wifiPopupDialog.dismiss();
+            wifiPopupDialog = null;
         }
         gnssProvider.destroy();
 

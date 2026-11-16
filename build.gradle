@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025-2026 Dezz (https://github.com/DezzK)
+ * Copyright © 2025-2026 Dezz (https://github.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,19 +12,58 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://gnu.org>.
  */
 
 String getVersionName() {
-    def envVersion = System.getenv('VERSION_NAME')
-    if (envVersion) {
-        return envVersion
+    if (ext.has('cachedVersionName')) {
+        return ext.cachedVersionName
     }
 
-    logger.warn('Environment variable `VERSION_NAME` was not set, using default version')
+    def envVersion = System.getenv('VERSION_NAME')
+    if (envVersion) {
+        ext.cachedVersionName = envVersion
+        return ext.cachedVersionName
+    }
 
-    return 'v3.0.0'
+    def currentDefault = 'v3.2.0'
+    def isAssembleTask = gradle.startParameter.taskNames.any {
+        it.toLowerCase().contains('assemble') || it.toLowerCase().contains('bundle')
+    }
+
+    if (isAssembleTask && !java.awt.GraphicsEnvironment.isHeadless()) {
+        def dialogHolder = new javax.swing.JDialog()
+        dialogHolder.setAlwaysOnTop(true)
+        def input = javax.swing.JOptionPane.showInputDialog(
+                dialogHolder,
+                "Текущая версия: ${currentDefault}\nВведите новую версию (формат vX.Y.Z) или нажмите ОК:",
+                "Версия сборки APK",
+                javax.swing.JOptionPane.QUESTION_MESSAGE,
+                null,
+                null,
+                currentDefault
+        )
+        dialogHolder.dispose()
+        if (input != null) {
+            def clean = input.toString().trim()
+            if (clean && clean != currentDefault) {
+                if (!clean.startsWith('v')) {
+                    clean = 'v' + clean
+                }
+                def rootGradleFile = file('build.gradle')
+                def content = rootGradleFile.getText('UTF-8')
+                content = content.replaceFirst(/def currentDefault = '[^']+'/, "def currentDefault = '${clean}'")
+                rootGradleFile.write(content, 'UTF-8')
+                currentDefault = clean
+            }
+        }
+    }
+
+    ext.cachedVersionName = currentDefault
+    return ext.cachedVersionName
 }
+
+
 
 int getVersionCode() {
     def version = getVersionName()
