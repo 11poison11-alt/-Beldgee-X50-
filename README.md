@@ -206,7 +206,7 @@ Wi-Fi, GPS и Bluetooth, а также подробный GNSS-статус (ч�
 
 ## Установка
 
-1. Скачать APK из раздела https://github.com/11poison11-alt/-Beldgee-X50-/releases/tag/v3.0.0
+1. Скачать APK из раздела [https://github.com/11poison11-alt/-Beldgee-X50-/releases/tag/v3.0.0](https://github.com/11poison11-alt/-Beldgee-X50-/releases/tag/v3.2.1)
   
 2. Скопировать на головное устройство (по USB, через файловый менеджер,
    через ADB — как удобнее).
