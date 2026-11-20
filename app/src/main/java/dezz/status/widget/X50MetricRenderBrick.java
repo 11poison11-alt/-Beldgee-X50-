@@ -129,11 +129,12 @@ final class X50MetricRenderBrick extends CarTextRenderBrick {
                 return String.format(Locale.US, "%.1f\u00A0км", val);
 
             case ENGINE_TEMP_C:
+                return "ДВС " + Math.round(val) + "\u00A0°C ";
             case TYRE_TEMP_FL_C:
             case TYRE_TEMP_FR_C:
             case TYRE_TEMP_RL_C:
             case TYRE_TEMP_RR_C:
-                return Math.round(val) + "\u00A0°C";
+                return Math.round(val) + "\u00A0°C ";
 
             case TYRE_PRESSURE_FL_KPA:
             case TYRE_PRESSURE_FR_KPA:
@@ -182,17 +183,21 @@ final class X50MetricRenderBrick extends CarTextRenderBrick {
     @NonNull
     private static String formatDriveMode(int mode) {
         switch (mode) {
-            case 570491137:
+            case 136:
             case 137:
+            case 570491136:
+            case 570491137:
                 return "ЭКО";
-            case 570491138:
             case 138:
+            case 570491138:
                 return "КОМФОРТ";
-            case 570491139:
             case 139:
+            case 570491139:
                 return "СПОРТ";
-            case 570491201:
+            case 200:
             case 201:
+            case 570491200:
+            case 570491201:
                 return "АДАПТИВ";
             default:
                 return "РЕЖ " + mode;

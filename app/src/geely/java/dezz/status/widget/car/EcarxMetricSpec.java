@@ -1,20 +1,3 @@
-/*
- * Copyright © 2025-2026 Dezz (https://github.com/DezzK)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package dezz.status.widget.car;
 
 import androidx.annotation.NonNull;
@@ -24,9 +7,6 @@ import com.ecarx.xui.adaptapi.car.base.ICarInfo;
 import com.ecarx.xui.adaptapi.car.sensor.ISensor;
 import com.ecarx.xui.adaptapi.car.sensor.IVirtualSensor;
 
-/**
- * Metric source definitions tailored for Belgee X50 / Geely Coolray (SX11) head units.
- */
 final class EcarxMetricSpec {
 
     enum Transport {
@@ -114,35 +94,36 @@ final class EcarxMetricSpec {
                 VhalType.FLOAT, propId, areaId, null, null, decoder);
     }
 
-    // --- Base metrics (with X50 VHAL primary/fallback sources, no duplicate CarMetric entries) ---
+    // --- Base metrics (Belgee X50 / Geely Coolray SX11) ---
 
+    /** Cabin temperature °C: Belgee X50 VHAL 557884281 (0x2140A379, (raw - 80) * 0.5 °C). */
     private static final EcarxMetricSpec CABIN_TEMPERATURE = new EcarxMetricSpec(Transport.SENSOR,
-            new int[]{ISensor.SENSOR_TYPE_TEMPERATURE_INDOOR}, true, EcarxReadings::temperature);
+            new int[]{ISensor.SENSOR_TYPE_TEMPERATURE_INDOOR}, true, EcarxReadings::temperature,
+            VhalType.INT, 557884281, 0,
+            null, raw -> (raw >= 10 && raw <= 250) ? ((raw - 80) * 0.5f) : Float.NaN, null);
 
+    /** Ambient outside temperature °C: Belgee X50 VHAL 557884279 (0x2140A377, (raw - 80) * 0.5 °C). */
     private static final EcarxMetricSpec AMBIENT_TEMPERATURE = new EcarxMetricSpec(Transport.SENSOR,
-            new int[]{ISensor.SENSOR_TYPE_TEMPERATURE_AMBIENT}, true, EcarxReadings::temperature);
-
-    /** Fuel level %: tries AdaptAPI sensor first, falls back to X50 VHAL 557884777 (0x2140A569). */
+            new int[]{ISensor.SENSOR_TYPE_TEMPERATURE_AMBIENT}, true, EcarxReadings::temperature,
+            VhalType.INT, 557884279, 0,
+            null, raw -> (raw >= 0 && raw <= 250) ? ((raw - 80) * 0.5f) : Float.NaN, null);
     private static final EcarxMetricSpec FUEL_PERCENT = new EcarxMetricSpec(Transport.SENSOR,
-            new int[]{IVirtualSensor.TYPE_FUEL_PERCENTAGE}, false, EcarxReadings::fuelPercent,
+            new int[]{ISensor.SENSOR_TYPE_FUEL_LEVEL}, true, EcarxReadings::fuelPercent,
             VhalType.INT, 557884777, 0,
             null, raw -> (raw >= 0 && raw <= 100) ? (float) raw : Float.NaN, null);
-
-    /** Remaining fuel range km: tries AdaptAPI sensor first, falls back to X50 VHAL 289407752 (0x11400308). */
     private static final EcarxMetricSpec FUEL_RANGE = new EcarxMetricSpec(Transport.SENSOR,
             new int[]{ISensor.SENSOR_TYPE_ENDURANCE_MILEAGE_FUEL, ISensor.SENSOR_TYPE_ENDURANCE_MILEAGE},
             false, EcarxReadings::rangeKm,
             VhalType.FLOAT, 289407752, 0,
             null, null, val -> (!Float.isNaN(val) && val >= 0f) ? val : Float.NaN);
 
-    /** 12 V system voltage: reads directly from X50 VHAL 557875206 (0x21408006, raw / 10.0f). */
     private static final EcarxMetricSpec BATTERY_VOLTAGE = vhalInt(557875206, 0,
             raw -> raw > 0 ? (raw / 10.0f) : Float.NaN);
 
     private static final EcarxMetricSpec TANK_CAPACITY = new EcarxMetricSpec(Transport.CAR_INFO,
             new int[]{ICarInfo.FLT_INFO_FUEL_CAPACITY}, false, EcarxReadings::tankLiters);
 
-    // --- Belgee X50 / Geely Coolray (SX11) VHAL metrics ---
+// --- Belgee X50 / Geely Coolray (SX11) VHAL metrics ---
 
     private static final EcarxMetricSpec SPEED_KMH = vhalFloat(291504647, 0,
             val -> (!Float.isNaN(val) && val >= 0f) ? val : Float.NaN);
@@ -154,11 +135,10 @@ final class EcarxMetricSpec {
             raw -> (float) raw);
 
     private static final EcarxMetricSpec ENGINE_TEMP_C = vhalInt(557875223, 0,
-            raw -> (raw * 0.75f) - 48.0f);
+            raw -> (raw > 0 && raw < 255) ? ((raw * 0.75f) - 37.0f) : Float.NaN);
 
     private static final EcarxMetricSpec DRIVE_MODE = vhalInt(557850837, 0,
-            raw -> raw != 255 ? (float) raw : Float.NaN);
-
+            raw -> (raw != 0 && raw != Integer.MIN_VALUE) ? (float) (raw - 570491000) : Float.NaN);
     private static final EcarxMetricSpec ENGINE_RUNNING = vhalInt(557875214, 0,
             raw -> raw == 2102788 ? 1.0f : (raw == 2102785 ? 0.0f : Float.NaN));
 

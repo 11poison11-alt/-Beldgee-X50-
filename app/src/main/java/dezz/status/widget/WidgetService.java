@@ -167,10 +167,8 @@ public class WidgetService extends Service implements WidgetHost {
         gnssProvider = new GnssProvider(this, mainHandler);
         renderBricks.put(BrickType.TIME, new TimeRenderBrick(this));
         renderBricks.put(BrickType.DATE, new DateRenderBrick(this));
-        renderBricks.put(BrickType.MEDIA, new MediaRenderBrick(this));
         renderBricks.put(BrickType.WIFI, new WifiRenderBrick(this));
         renderBricks.put(BrickType.GPS, new GpsRenderBrick(this));
-        renderBricks.put(BrickType.BLUETOOTH, new BluetoothRenderBrick(this));
         renderBricks.put(BrickType.INDOOR_TEMP, new TempRenderBrick(this, BrickType.INDOOR_TEMP,
                 prefs.indoorTemp, R.id.indoorTempBrick,
                 R.drawable.ic_reading_cabin_temp,
@@ -201,7 +199,7 @@ public class WidgetService extends Service implements WidgetHost {
                 CarMetric.GEAR_STATE));
         renderBricks.put(BrickType.ENGINE_TEMP, new X50MetricRenderBrick(this, BrickType.ENGINE_TEMP,
                 prefs.carEngineTemp, R.id.engineTempBrick,
-                R.drawable.ic_reading_cabin_temp, R.drawable.ic_reading_filled_cabin_temp, R.drawable.ic_reading_bars_cabin_temp,
+                R.drawable.ic_reading_engine_temp, R.drawable.ic_reading_engine_temp, R.drawable.ic_reading_engine_temp,
                 CarMetric.ENGINE_TEMP_C));
         renderBricks.put(BrickType.DRIVE_MODE, new X50MetricRenderBrick(this, BrickType.DRIVE_MODE,
                 prefs.carDriveMode, R.id.driveModeBrick,

@@ -26,7 +26,7 @@ String getVersionName() {
         return ext.cachedVersionName
     }
 
-    def currentDefault = 'v3.2.0'
+    def currentDefault = 'v3.2.1'
     def isAssembleTask = gradle.startParameter.taskNames.any {
         it.toLowerCase().contains('assemble') || it.toLowerCase().contains('bundle')
     }

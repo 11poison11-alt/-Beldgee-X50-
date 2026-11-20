@@ -140,7 +140,6 @@ final class GeelyCarIntegration implements CarIntegration {
             this.sensors = sensors;
         }
     }
-
     @WorkerThread
     @NonNull
     private ProbeResult probeVendorSdk() {
@@ -212,6 +211,7 @@ final class GeelyCarIntegration implements CarIntegration {
                 return Float.NaN;
         }
     }
+
     private float readLatest(@NonNull CarMetric metric) {
         EcarxMetricSpec spec = EcarxMetricSpec.of(metric);
         if (spec == null) {
@@ -248,7 +248,12 @@ final class GeelyCarIntegration implements CarIntegration {
         if (spec.hasVhalProperty()) {
             return readVhal(metric, spec);
         }
-        diagnosticCodes.put(metric, "Sdk:" + initState.name());
+        if (metric == CarMetric.AMBIENT_TEMPERATURE_C) {
+            VhalProperties p = vhal();
+            diagnosticCodes.put(metric, p != null ? p.findChangedProperties() : "VhalNull");
+        } else {
+            diagnosticCodes.put(metric, "Sdk:" + initState.name());
+        }
         return Float.NaN;
     }
 
@@ -264,23 +269,19 @@ final class GeelyCarIntegration implements CarIntegration {
         }
         VhalProperties.Read read;
         float value = Float.NaN;
-        String rawDebug = "";
 
         if (spec.vhalType == EcarxMetricSpec.VhalType.INT && spec.vhalIntDecoder != null) {
             read = properties.readInt(spec.vhalProperty, spec.vhalAreaId);
-            rawDebug = "I:" + read.intValue;
             if (read.problem == null && read.intValue != Integer.MIN_VALUE) {
                 value = spec.vhalIntDecoder.decode(read.intValue);
             }
         } else if (spec.vhalType == EcarxMetricSpec.VhalType.FLOAT && spec.vhalFloatDecoder != null) {
             read = properties.readFloat(spec.vhalProperty, spec.vhalAreaId);
-            rawDebug = "F:" + read.floatValue;
             if (read.problem == null && !Float.isNaN(read.floatValue)) {
                 value = spec.vhalFloatDecoder.decode(read.floatValue);
             }
         } else if (spec.vhalType == EcarxMetricSpec.VhalType.BYTES && spec.vhalBytesDecoder != null) {
             read = properties.read(spec.vhalProperty, spec.vhalAreaId);
-            rawDebug = "B:" + (read.bytes == null ? "null" : read.bytes.length);
             if (read.problem == null) {
                 value = spec.vhalBytesDecoder.decode(read.bytes);
             }
@@ -295,8 +296,6 @@ final class GeelyCarIntegration implements CarIntegration {
                     .replace("threw ", "Ex:")
                     .replace("Exception", "");
             diagnosticCodes.put(metric, shortErr);
-        } else if (Float.isNaN(value)) {
-            diagnosticCodes.put(metric, "NaN(" + rawDebug + ")");
         } else {
             diagnosticCodes.remove(metric);
         }
@@ -308,7 +307,6 @@ final class GeelyCarIntegration implements CarIntegration {
         }
         return value;
     }
-
     @Nullable
     private VhalProperties vhal() {
         if (vhal == null && !vhalUnavailable) {
@@ -467,6 +465,7 @@ final class GeelyCarIntegration implements CarIntegration {
                 return false;
         }
     }
+
     private boolean subscribeSensor(@NonNull CarMetric metric, @NonNull EcarxMetricSpec spec) {
         ISensor s = sensors;
         final AtomicBoolean cancelled = new AtomicBoolean(false);
@@ -523,10 +522,11 @@ final class GeelyCarIntegration implements CarIntegration {
     }
 
     private static long basePollInterval(@NonNull CarMetric metric) {
-        return (metric == CarMetric.SPEED_KMH || metric == CarMetric.GEAR_STATE)
+        return (metric == CarMetric.SPEED_KMH
+                || metric == CarMetric.GEAR_STATE
+                || metric == CarMetric.DRIVE_MODE)
                 ? FAST_PULL_INTERVAL_MS : PULL_INTERVAL_MS;
     }
-
     @NonNull
     private Runnable startPuller(@NonNull CarMetric metric, @NonNull AtomicBoolean cancelled) {
         final long baseInterval = basePollInterval(metric);
